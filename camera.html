@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Capture Photo</title>
+    <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1"/>
+	<link rel="stylesheet" href="css/jquery.mobile-1.0.min.css" />
+	<script type="text/javascript" src="js/jquery-1.6.4.min.js"></script>
+	<script type="text/javascript" src="js/jquery.mobile-1.0.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="js/phonegap.js"></script>
+    <script type="text/javascript" charset="utf-8">
+	var pictureSource;   // picture source
+	var destinationType; // sets the format of returned value
+ 
+document.addEventListener("deviceready", onDeviceReady, false);
+ 
+function onDeviceReady() {
+    pictureSource = navigator.camera.PictureSourceType;
+    destinationType = navigator.camera.DestinationType;
+}
+ 
+function clearCache() {
+    navigator.camera.cleanup();
+}
+ 
+var retries = 0;
+function onCapturePhoto(fileURI) {
+    var win = function (r) {
+        clearCache();
+        retries = 0;
+        alert('Done!');
+    }
+ 
+    var fail = function (error) {
+        if (retries == 0) {
+            retries ++
+            setTimeout(function() {
+                onCapturePhoto(fileURI)
+            }, 1000)
+        } else {
+            retries = 0;
+            clearCache();
+            alert('Ups. Something wrong happens!');
+        }
+    }
+ 
+    var options = new FileUploadOptions();
+    options.fileKey = "file";
+    options.fileName = fileURI.substr(fileURI.lastIndexOf('/') + 1);
+    options.mimeType = "image/jpeg";
+    options.params = {}; // if we need to send parameters to the server request
+    var ft = new FileTransfer();
+    ft.upload(fileURI, encodeURI("http://localhost/camup/upload.php"), win, fail, options);
+}
+ 
+function capturePhoto() {
+    navigator.camera.getPicture(onCapturePhoto, onFail, {
+        quality: 100,
+        destinationType: destinationType.FILE_URI
+    });
+}
+ 
+function onFail(message) {
+    alert('Failed because: ' + message);
+}
+</script>
+ </head>
+<body> 
+
+<div data-role="page">
+
+	<div data-role="header">
+		<h1>Take a Selfie!</h1>
+	</div><!-- /header -->
+
+	<div data-role="content">	
+		<input type="button" value="Capture a Photo" onclick="capturePhoto();" />		
+	</div><!-- /content -->
+
+	<div data-role="footer">
+		<h4>Refine Interactive</h4>
+	</div><!-- /footer -->
+</div><!-- /page -->
+
+</body>
+</html>
