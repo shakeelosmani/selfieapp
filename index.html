@@ -1,85 +1,123 @@
+
+
 <!DOCTYPE html>
 <html>
   <head>
     <title>Capture Photo</title>
-    <meta name="viewport" content="width=device-width,height=device-height,initial-scale=1"/>
+
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
 	<link rel="stylesheet" href="css/jquery.mobile-1.0.min.css" />
 	<script type="text/javascript" src="js/jquery-1.6.4.min.js"></script>
 	<script type="text/javascript" src="js/jquery.mobile-1.0.min.js"></script>
-    <script type="text/javascript" charset="utf-8" src="js/phonegap.js"></script>
     <script type="text/javascript" charset="utf-8">
-	var pictureSource;   // picture source
-	var destinationType; // sets the format of returned value
- 
-document.addEventListener("deviceready", onDeviceReady, false);
- 
-function onDeviceReady() {
-    pictureSource = navigator.camera.PictureSourceType;
-    destinationType = navigator.camera.DestinationType;
-}
- 
-function clearCache() {
-    navigator.camera.cleanup();
-}
- 
-var retries = 0;
-function onCapturePhoto(fileURI) {
-    var win = function (r) {
-        clearCache();
-        retries = 0;
-        alert('Done!');
+
+    var pictureSource;   // picture source
+    var destinationType; // sets the format of returned value
+
+    // Wait for device API libraries to load
+    //
+    document.addEventListener("deviceready",onDeviceReady,false);
+
+    // device APIs are available
+    //
+    function onDeviceReady() {
+        pictureSource=navigator.camera.PictureSourceType;
+        destinationType=navigator.camera.DestinationType;
     }
- 
-    var fail = function (error) {
-        if (retries == 0) {
-            retries ++
-            setTimeout(function() {
-                onCapturePhoto(fileURI)
-            }, 1000)
-        } else {
-            retries = 0;
-            clearCache();
-            alert('Ups. Something wrong happens!');
-        }
+
+    // Called when a photo is successfully retrieved
+    //
+    function onPhotoDataSuccess(imageData) {
+      // Uncomment to view the base64-encoded image data
+      // console.log(imageData);
+
+      // Get image handle
+      //
+      var smallImage = document.getElementById('smallImage');
+
+      // Unhide image elements
+      //
+      smallImage.style.display = 'block';
+
+      // Show the captured photo
+      // The in-line CSS rules are used to resize the image
+      //
+      smallImage.src = "data:image/jpeg;base64," + imageData;
     }
- 
-    var options = new FileUploadOptions();
-    options.fileKey = "file";
-    options.fileName = fileURI.substr(fileURI.lastIndexOf('/') + 1);
-    options.mimeType = "image/jpeg";
-    options.params = {}; // if we need to send parameters to the server request
-    var ft = new FileTransfer();
-    ft.upload(fileURI, encodeURI("http://localhost/camup/upload.php"), win, fail, options);
-}
- 
-function capturePhoto() {
-    navigator.camera.getPicture(onCapturePhoto, onFail, {
-        quality: 100,
-        destinationType: destinationType.FILE_URI
-    });
-}
- 
-function onFail(message) {
-    alert('Failed because: ' + message);
-}
-</script>
- </head>
-<body> 
 
-<div data-role="page">
+    // Called when a photo is successfully retrieved
+    //
+    function onPhotoURISuccess(imageURI) {
+      // Uncomment to view the image file URI
+      // console.log(imageURI);
 
-	<div data-role="header">
-		<h1>Take a Selfie!</h1>
-	</div><!-- /header -->
+      // Get image handle
+      //
+      var largeImage = document.getElementById('largeImage');
 
-	<div data-role="content">	
-		<input type="button" value="Capture a Photo" onclick="capturePhoto();" />		
-	</div><!-- /content -->
+      // Unhide image elements
+      //
+      largeImage.style.display = 'block';
 
-	<div data-role="footer">
-		<h4>Refine Interactive</h4>
-	</div><!-- /footer -->
-</div><!-- /page -->
+      // Show the captured photo
+      // The in-line CSS rules are used to resize the image
+      //
+      largeImage.src = imageURI;
+    }
 
-</body>
+    // A button will call this function
+    //
+    function capturePhoto() {
+      // Take picture using device camera and retrieve image as base64-encoded string
+      navigator.camera.getPicture(onPhotoDataSuccess, onFail, { quality: 50,
+        destinationType: destinationType.DATA_URL });
+    }
+
+    // A button will call this function
+    //
+    function capturePhotoEdit() {
+      // Take picture using device camera, allow edit, and retrieve image as base64-encoded string
+      navigator.camera.getPicture(onPhotoDataSuccess, onFail, { quality: 20, allowEdit: true,
+        destinationType: destinationType.DATA_URL });
+    }
+
+    // A button will call this function
+    //
+    function getPhoto(source) {
+      // Retrieve image file location from specified source
+      navigator.camera.getPicture(onPhotoURISuccess, onFail, { quality: 50,
+        destinationType: destinationType.FILE_URI,
+        sourceType: source });
+    }
+
+    // Called if something bad happens.
+    //
+    function onFail(message) {
+      alert('Failed because: ' + message);
+    }
+
+    </script>
+  </head>
+  <body>
+	<div data-role="page">
+
+		<div data-role="header">
+			<h1>Take a Selfie!</h1>
+		</div><!-- /header -->
+
+		<div data-role="content">	
+		<button onclick="capturePhoto();">Capture Photo</button> <br>
+		<button onclick="capturePhotoEdit();">Capture Editable Photo</button> <br>
+		<button onclick="getPhoto(pictureSource.PHOTOLIBRARY);">From Photo Library</button><br>
+		<button onclick="getPhoto(pictureSource.SAVEDPHOTOALBUM);">From Photo Album</button><br>
+		<img style="display:none;width:60px;height:60px;" id="smallImage" src="" />
+		<img style="display:none;" id="largeImage" src="" />
+		</div><!-- /content -->
+
+		<div data-role="footer">
+			<h4>Refine Interactive</h4>
+		</div><!-- /footer -->
+	</div><!-- /page -->
+    
+  </body>
 </html>
